@@ -31,6 +31,23 @@
 // - Exiba a pilha junto com a fila após cada ação com mostrarPilha().
 // - Mantenha a fila sempre com 5 peças (repondo com gerarPeca()).
 
+// 🔄 Nível Mestre: Integração Estratégica entre Fila e Pilha
+//
+// - Implemente interações avançadas entre as estruturas:
+//      4 - Trocar a peça da frente da fila com o topo da pilha
+//      5 - Trocar os 3 primeiros da fila com as 3 peças da pilha
+// - Para a opção 4:
+//      Verifique se a fila não está vazia e a pilha tem ao menos 1 peça.
+//      Troque os elementos diretamente nos arrays.
+// - Para a opção 5:
+//      Verifique se a pilha tem exatamente 3 peças e a fila ao menos 3.
+//      Use a lógica de índice circular para acessar os primeiros da fila.
+// - Sempre valide as condições antes da troca e informe mensagens claras ao usuário.
+// - Use funções auxiliares, se quiser, para modularizar a lógica de troca.
+// - O menu deve ficar assim:
+//      4 - Trocar peça da frente com topo da pilha
+//      5 - Trocar 3 primeiros da fila com os 3 da pilha
+
 #define PIECES_S 4
 #define QUEUE_S 5
 #define STACK_S 3
@@ -73,14 +90,7 @@ void initQueue(Queue *q){
         q->total++;
     }
 }
-void initStack(Stack *s){
-    s->top=-1;
-    s->total=0;
-    for (int i=0 ;i<STACK_S;i++){
-        s->piece[i].tipo = '\0';
-        s->piece[i].id = -1;
-    }
-}
+
 
 int fullQueue(Queue *q){
     if(q->total==QUEUE_S){return 1;}else{return 0;}
@@ -139,8 +149,49 @@ Piece pop(Stack *s){
     s->total--;
     return rem;
 }
+void initStack(Stack *s){
+    s->top=-1;
+    s->total=0;
+    for (int i=0 ;i<STACK_S;i++){
+        Piece p = genPiece();
+        push(s, p);
+        /* s->piece[i].tipo = '\0';
+        s->piece[i].id = -1; */
+    }
+}
 int pecaNula(Piece p){
     if(p.tipo=='\0'&&p.id==-1){return 1;}else{return 0;}
+}
+
+void changeFirst(Stack *s, Queue *q){
+    if(noneStack(s)==1){
+        printf("A pilha está vazia.\n");
+        return;
+    }
+    Piece temp = s->piece[s->top];
+    s->piece[s->top] = q->piece[q->start];
+    q->piece[q->start] = temp;
+}
+void changeThree(Stack *s, Queue *q){
+    if(s->total<STACK_S){
+        printf("A pilha não tem %d peças.\n",STACK_S);
+        return;
+    }
+    Queue tempQ;
+    tempQ.start = 0;
+    tempQ.end = -1;
+    tempQ.total = 0;
+    
+    int f= 0;
+    for (int i =s->top;i>=0;i--){
+        Piece temp = s->piece[i];
+        enqueue(&tempQ, temp);
+        s->piece[i] = q->piece[(q->start + f) % QUEUE_S];
+        f++;
+    }
+    for (int i =0;i<STACK_S;i++){
+        q->piece[(q->start + i) % QUEUE_S] = tempQ.piece[i];
+    }
 }
 
 void showState(Queue *q, Stack *s){
@@ -166,6 +217,8 @@ void menu(Queue *q, Stack *s){
         printf("1 -> Jogar peça\n");
         printf("2 -> Reservar Peça\n");
         printf("3 -> Usar Peça Reservada\n");
+        printf("4 -> Trocar peça da frente da fila com o topo da pilha\n");
+        printf("5 -> Trocar os %d primeiros da fila com as %d peças da pilha\n",STACK_S,STACK_S);
         printf("0 -> Sair\n");
         scanf("%d",&opt);
         switch (opt){
@@ -204,6 +257,25 @@ void menu(Queue *q, Stack *s){
                 enqueue(q, pS);
                 printf("Peça '%c' da pilha usada na fila!\n", pS.tipo);
                 break;
+
+            case 4:
+                if(noneQueue(q)==1){
+                    printf("A pilha está vazia.\n");
+                    break;
+                }
+                changeFirst(s, q);
+                printf("As primeira peças foram trocadas!\n");                  
+                break;
+            case 5:
+                if (s->total==STACK_S){
+                    changeThree(s, q);
+                    printf("As %d foram trocadas!\n",STACK_S);                  
+                    break;
+                }
+                printf("A pilha não está cheia ainda.\n");
+                break;
+
+            
             case 0:
                 printf("Saindo...\n");
                 return;
@@ -223,21 +295,3 @@ int main(){
     menu(&q,&s);
     return 0;
 }
-
-
-// 🔄 Nível Mestre: Integração Estratégica entre Fila e Pilha
-//
-// - Implemente interações avançadas entre as estruturas:
-//      4 - Trocar a peça da frente da fila com o topo da pilha
-//      5 - Trocar os 3 primeiros da fila com as 3 peças da pilha
-// - Para a opção 4:
-//      Verifique se a fila não está vazia e a pilha tem ao menos 1 peça.
-//      Troque os elementos diretamente nos arrays.
-// - Para a opção 5:
-//      Verifique se a pilha tem exatamente 3 peças e a fila ao menos 3.
-//      Use a lógica de índice circular para acessar os primeiros da fila.
-// - Sempre valide as condições antes da troca e informe mensagens claras ao usuário.
-// - Use funções auxiliares, se quiser, para modularizar a lógica de troca.
-// - O menu deve ficar assim:
-//      4 - Trocar peça da frente com topo da pilha
-//      5 - Trocar 3 primeiros da fila com os 3 da pilha
