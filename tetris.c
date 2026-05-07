@@ -20,155 +20,6 @@
 //      0 - Sair
 // - A cada remoção, insira uma nova peça ao final da fila.
 
-#define MAX_PIECES 8
-#define MIN_PIECES 4
-
-struct Piece{
-    char tipo;
-    int id;
-};
-struct Fila{
-    int inicio;
-    int fim;
-    int total;
-    struct Piece peca[MAX_PIECES];
-};
-
-int filaCheia(struct Fila *f){
-    if( f->total == MAX_PIECES){
-        return 1;
-    }else {return 0;}
-}
-int filaVazia(struct Fila *f){
-    if(f->total==0){
-        return 1;
-    }else{return 0;}
-}
-
-void showFila(struct Fila *f){
-    if(filaVazia(f)==1){
-        printf("\nA fila de peças está vazia.\n");
-        return;
-    }
-    
-    printf("\n--- Fila de Peças ---\n");
-    
-    int idx = f->inicio;
-    for(int i = 0; i < f->total; i++){
-        printf("%d# --> '%c' (id: %d)\n",
-            i+1,
-            f->peca[idx].tipo,
-            f->peca[idx].id);
-            
-            idx = (idx + 1) % MAX_PIECES;
-    }
-}
-
-void queue(struct Fila *f, struct Piece piece){
-    // Checagem se a fila está cheia
-    if (filaCheia(f)==1){
-        printf("\nA fila está cheia!\n");
-        return;
-    }
-
-    // Coloca a peça passada como parâmetro no indice final da fila
-    f->peca[f->fim] = piece;
-    // Muda o indice final para frente modularizado garantindo que a fila seja circular
-    f->fim = (f->fim+1)%MAX_PIECES;
-    // Aumenta o valor da quantidade de peças na fila 
-    f->total++;
-    printf("Peça '%c' Inserida na fila!\n", piece.tipo);
-}
-struct Piece dequeue(struct Fila *f){
-    // Checagem se a fila está vazia, caso esteja retorna uma peça vazia
-    struct Piece vazio = {-1};
-    if(filaVazia(f)==1){
-        printf("\nA fila está vazia!\n");
-        return vazio;
-    }
-
-    // Coloca a primeira peça em uma variável temporária que será retornada ao ser deletada da fila
-    struct Piece removed;
-    removed = f->peca[f->inicio];
-    // Move o primeiro indice para frente modularizadando garantido que a fila continue circular
-    f->inicio = (f->inicio+1)%MAX_PIECES;
-    // Diminui a quantidade total de peças na fila
-    f->total--;
-    printf("Peça '%c' removida da fila!\n", removed.tipo);
-    // Retorna a peça removida para impressão.
-    return removed;
-}
-
-void firstPieces(struct Fila *f){
-    char pieces[MIN_PIECES] = {'T','O','I','L'};
-    int r = rand()%MIN_PIECES;
-
-    for(int i=0;i<MIN_PIECES;i++){
-        struct Piece p;
-        p.id = i;
-        p.tipo = pieces[(r+i)%MIN_PIECES];
-        queue(f, p);
-    }
-}
-void initFila(struct Fila *f){
-    f->inicio = 0;
-    f->fim = 0;
-    f->total = 0;
-    firstPieces(f);
-    showFila(f);
-}
-
-struct Piece genPiece(){
-    char pieces[MIN_PIECES] = {'T','O','I','L'};
-    int r = rand()%MIN_PIECES;
-    struct Piece piece;
-    piece.tipo = pieces[r];
-    piece.id= rand()%100;
-    return piece;
-    
-}
-
-void menu(struct Fila *fila){
-    do{
-        int opt;
-        printf("\n---     Menu de opções   ---\n");
-        printf("1 -> Jogar uma peça\n");
-        printf("2 -> Inserir nova peça\n");
-        printf("0 -> Sair\n");
-        scanf("%d",&opt);
-        switch (opt){
-            case 1:
-                struct Piece rem = dequeue(fila);
-                showFila(fila);
-                break;
-            case 2:
-                struct Piece p = genPiece();
-                queue(fila, p);
-                showFila(fila);
-                break;
-            case 0:
-                printf("\nSaindo...\n");
-                return;
-            default:
-                printf("\nOpção inválida! Tente novamente.\n");
-                break;
-        }
-    }while(1);
-}
-
-
-int main() {
-    srand(time(NULL));
-    struct Fila fila;
-
-    initFila(&fila);
-    menu(&fila);
-    
-    return 0;
-}
-
-
-
 // 🧠 Nível Aventureiro: Adição da Pilha de Reserva
 //
 // - Implemente uma pilha linear com capacidade para 3 peças.
@@ -179,6 +30,199 @@ int main() {
 //      3 - Usar peça da reserva (remover do topo da pilha)
 // - Exiba a pilha junto com a fila após cada ação com mostrarPilha().
 // - Mantenha a fila sempre com 5 peças (repondo com gerarPeca()).
+
+#define PIECES_S 4
+#define QUEUE_S 5
+#define STACK_S 3
+
+typedef struct Piece{
+    char tipo;
+    int id;
+}Piece;
+
+typedef struct Queue{
+    int start;
+    Piece piece[QUEUE_S];
+    int end;
+    int total;
+}Queue;
+
+typedef struct Stack{
+    int top;
+    Piece piece[STACK_S];
+    int total;
+}Stack;
+
+Piece genPiece(){
+    Piece piece;
+    char pieceList[PIECES_S] = {'T','O','I','L'};
+    int rP = rand()%PIECES_S;
+    int rID = rand()%100;
+    piece.tipo = pieceList[rP];
+    piece.id = rID;
+    return piece;
+}
+
+void initQueue(Queue *q){
+    q->start = 0;
+    q->end = -1;
+    q->total = 0;
+    for (int i=0; i<QUEUE_S;i++){
+        q->piece[i] = genPiece();
+        q->end++;
+        q->total++;
+    }
+}
+void initStack(Stack *s){
+    s->top=-1;
+    s->total=0;
+    for (int i=0 ;i<STACK_S;i++){
+        s->piece[i].tipo = '\0';
+        s->piece[i].id = -1;
+    }
+}
+
+int fullQueue(Queue *q){
+    if(q->total==QUEUE_S){return 1;}else{return 0;}
+}
+int fullStack(Stack *s){
+    if(s->total==STACK_S){return 1;}else{return 0;}
+}
+
+int noneQueue(Queue *q){
+    if (q->total==0){return 1;}else{return 0;}
+}
+int noneStack(Stack *s){
+    if (s->total==0){return 1;}else{return 0;}
+}
+
+void enqueue(Queue *q, Piece p){
+    if(fullQueue(q)==1){
+        printf("A fila está cheia.\n");
+        return;
+    }
+    q->end = (q->end+1)%QUEUE_S;
+    q->piece[q->end] = p;
+    q->total++;
+}
+Piece dequeue(Queue *q){
+    Piece naN = {'\0',-1};
+    if (noneQueue(q)==1){
+        printf("A fila está vazia.\n");
+        return naN;
+    }
+
+    Piece rem = q->piece[q->start]; 
+    q->start = (q->start+1)%QUEUE_S;
+    q->total--;
+    return rem;
+}
+
+void push(Stack *s, Piece p){
+    if(fullStack(s)==1){
+        printf("A pilha está cheia.\n");
+        return;
+    }
+    s->top++;
+    s->piece[s->top] = p;
+    s->total++;
+}
+Piece pop(Stack *s){
+    Piece p = {'\0', -1};
+    if(noneStack(s)==1){
+        printf("A pilha está vazia.\n");
+        return p;
+    }
+    
+    Piece rem = s->piece[s->top];
+    s->top--;
+    s->total--;
+    return rem;
+}
+int pecaNula(Piece p){
+    if(p.tipo=='\0'&&p.id==-1){return 1;}else{return 0;}
+}
+
+void showState(Queue *q, Stack *s){
+    int idx = q->start;
+    printf("\n---     Fila de Peças    ---\n");
+    for (int i=0; i<q->total;i++){
+        printf("['%c'  '%d']  ",q->piece[idx].tipo, q->piece[idx].id);
+        idx = (idx+1)%QUEUE_S;
+    }
+    printf("\n\n---     Pilha de Reservas    ---\n");
+    for (int i=s->total-1; i>=0;i--){
+        printf("['%c'  '%d']",s->piece[i].tipo, s->piece[i].id);
+    }
+}
+
+void menu(Queue *q, Stack *s){
+    do{
+        showState(q,s);
+        int opt;
+        printf("\n=============================\n");
+        printf("        Menu de opções\n");
+        printf("=============================\n");
+        printf("1 -> Jogar peça\n");
+        printf("2 -> Reservar Peça\n");
+        printf("3 -> Usar Peça Reservada\n");
+        printf("0 -> Sair\n");
+        scanf("%d",&opt);
+        switch (opt){
+            case 1:
+                Piece pD = dequeue(q);
+                if(pecaNula(pD)==1){
+                    printf("Erro ao remover da fila.\n");
+                    break;
+                }
+                printf("Peça '%c' removida da fila de peças!\n", pD.tipo);
+                break;
+            case 2:
+                if(fullStack(s)==1){ // GPT
+                    printf("A pilha de reservas está cheia.\n");
+                break;
+                }
+
+                Piece pDQ = dequeue(q);
+                if(pecaNula(pDQ)==1){
+                    printf("Erro ao remover da fila.\n");
+                    break;
+                }
+                push(s, pDQ);
+                printf("Peça '%c' reservada na pilha!\n", pDQ.tipo);
+                break;
+            case 3:
+                if(fullQueue(q)==1){
+                    printf("A fila está cheia.\n");
+                    break;
+                }
+                Piece pS = pop(s);
+                if(pecaNula(pS)==1){
+                    printf("Erro ao remover da pilha.\n");
+                    break;
+                }
+                enqueue(q, pS);
+                printf("Peça '%c' da pilha usada na fila!\n", pS.tipo);
+                break;
+            case 0:
+                printf("Saindo...\n");
+                return;
+            default:
+                printf("Tecla não associada! Tente novamente.\n");
+            }
+    }while(1);
+}
+
+
+int main(){
+    srand(time(NULL));
+    Queue q;
+    Stack s;
+    initQueue(&q);
+    initStack(&s);
+    menu(&q,&s);
+    return 0;
+}
 
 
 // 🔄 Nível Mestre: Integração Estratégica entre Fila e Pilha
